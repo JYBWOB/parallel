@@ -3,9 +3,7 @@
 #include<cmath>
 #include<stdio.h>
 #include<cstring>
-#include<windows.h>
-#include<immintrin.h>
-#include<fstream>
+#include<time.h>
 using namespace std;
 const int maxN = 8;
 //初始化A为一个N*N的矩阵的对称矩阵
@@ -18,6 +16,8 @@ float b[maxN] = {1.0};
 float r[maxN] = {-1};
 float d[maxN] = {0};
 float x[maxN] = {0};
+
+struct timespec sts, ets;
 
 void displayMatrix(float a[maxN][maxN], int N){
     for(int i=0;i<N;i++){
@@ -92,9 +92,7 @@ int main(){
     displayMatrix(A, N);
     //displayVector(b, N);
 
-    long long head , tail , freq ;
-    QueryPerformanceFrequency ((LARGE_INTEGER *)&freq );
-    QueryPerformanceCounter ((LARGE_INTEGER *)&head );
+    timespec_get(&sts, TIME_UTC);
     //开始迭代
     for(int i =0;i<1024;i++){
         float r2 = INNER_PRODUCT(r, r, N);
@@ -116,9 +114,10 @@ int main(){
             d[j] = -r[j] + beta * d[j];
         }
     }
-    QueryPerformanceCounter ((LARGE_INTEGER *)&tail );
-    total_time += (tail - head) * 1000.0 / freq;
-    cout << N << " : " << total_time<< "ms" << endl;
+    timespec_get(&ets, TIME_UTC);
+    time_t dsec = ets.tv_sec - sts.tv_sec;
+    long dnsec = ets.tv_nsec - sts.tv_nsec;
+    printf("%llu.%09llus\n", dsec, dnsec);
     displayVector(x, N);
     return 0;
 }
