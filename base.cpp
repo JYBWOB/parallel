@@ -72,7 +72,6 @@ float MATRIX_PRODUCT(float a[maxN][maxN], float d[maxN], int N){
 
 
 int main(){
-    fstream file("init.csv", ios::out);
     int N = 8;
     float total_time = 0.0f;
     //初始化A
@@ -120,8 +119,6 @@ int main(){
     QueryPerformanceCounter ((LARGE_INTEGER *)&tail );
     total_time += (tail - head) * 1000.0 / freq;
     cout << N << " : " << total_time<< "ms" << endl;
-    file << N << ',' << total_time << "\n";
-    file.close();
     displayVector(x, N);
     return 0;
 }
