@@ -5,6 +5,7 @@
 #include<cstring>
 #include<time.h>
 #include<fstream>
+#include<arm_neon.h>
 using namespace std;
 const int maxN = 8192;
 //初始化A为一个N*N的矩阵的对称矩阵
@@ -38,22 +39,39 @@ void displayVector(float b[maxN], int N){
 
 //计算内积
 float INNER_PRODUCT(float a[maxN], float b[maxN], int N){
-    float res = 0;
-    for(int i=0;i<N;i++){
-        res+=a[i]*b[i];
+    // float res = 0;
+    // for(int i=0;i<N;i++){
+    //     res+=a[i]*b[i];
+    // }
+    // return res;
+    float32x4_t res4 = vmovq_n_f32(0);
+    float32x4_t ta, tb;
+    for(int i = 0; i < N; i += 4) {
+        ta = vld1q_f32(a + i);
+        tb = vld1q_f32(b + i);
+        ta = vmulq_f32(ta, tb);
+        res4 = vaddq_f32(res4, ta);
     }
-    return res;
+    float32x2_t suml2 = vget_low_f32(res4);
+    float32x2_t sumh2 = vget_high_f32(res4);
+    suml2 = vpadd_f32(suml2, sumh2);
+    return (float)vpadds_f32(suml2);
 }
 
 //更新残差 r = A*x-b
 void  MATRIX_VECTOR_PRODUCT(float *r, float a[maxN][maxN], float x[maxN],float b[maxN], int N){
+    // float temp = 0;
+    // for(int i = 0; i < N; i++){
+    //     temp = 0;
+    //     for(int j = 0; j < N; j++){
+    //         temp += a[i][j] * x[j];
+    //     }
+    //     r[i] = temp - b[i];
+    // }
+
     float temp = 0;
-    for(int i=0;i<N;i++){
-        temp = 0;
-        for(int j=0;j<N;j++){
-            temp += a[i][j]*x[j];
-        }
-        r[i] = temp - b[i];
+    for(int i = 0; i < N; i++){
+        r[i] = INNER_PRODUCT(a[i], x, N) - b[i];
     }
 }
 
@@ -62,18 +80,19 @@ float MATRIX_PRODUCT(float a[maxN][maxN], float d[maxN], int N){
     float res = 0;
     float temp = 0;
     for(int i=0;i<N;i++){
-        temp = 0;
-        for(int j = 0;j<N;j++){
-            temp += d[j]*A[i][j];
-        }
-        res += temp*d[i];
+        // temp = 0;
+        // for(int j = 0;j<N;j++){
+        //     temp += d[j]*A[i][j];
+        // }
+        // res += temp*d[i];
+        res += d[i] * INNER_PRODUCT(a[i], d, N);
     }
     return res;
 }
 
 
 int main(){
-    fstream file("res_base.csv", ofstream::out);
+    fstream file("res_128.csv", ofstream::out);
     for(int N = 64; N <= maxN; N *= 2) {
         //初始化A
         for(int i=0;i<N;i++){
@@ -92,8 +111,8 @@ int main(){
         for(int i = 0; i < N; i++)
             d[i] = -r[i];
         
-        //displayMatrix(A, N);
-        //displayVector(b, N);
+        // displayMatrix(A, N);
+        // displayVector(b, N);
 
         timespec_get(&sts, TIME_UTC);
         //开始迭代
@@ -124,6 +143,5 @@ int main(){
         file << N << "," << dsec << "." << dnsec << endl;
         // displayVector(x, N);
     }
-    file.close();
     return 0;
 }

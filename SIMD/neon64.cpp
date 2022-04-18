@@ -44,18 +44,15 @@ float INNER_PRODUCT(float a[maxN], float b[maxN], int N){
     //     res+=a[i]*b[i];
     // }
     // return res;
-    float32x4_t res4 = vmovq_n_f32(0);
-    float32x4_t ta, tb;
-    for(int i = 0; i < N; i += 4) {
-        ta = vld1q_f32(a + i);
-        tb = vld1q_f32(b + i);
-        ta = vmulq_f32(ta, tb);
-        res4 = vaddq_f32(res4, ta);
+    float32x2_t res2 = vmov_n_f32(0);
+    float32x2_t ta, tb;
+    for(int i = 0; i < N; i += 2) {
+        ta = vld1_f32(a + i);
+        tb = vld1_f32(b + i);
+        ta = vmul_f32(ta, tb);
+        res2 = vadd_f32(res2, ta);
     }
-    float32x2_t suml2 = vget_low_f32(res4);
-    float32x2_t sumh2 = vget_high_f32(res4);
-    suml2 = vpadd_f32(suml2, sumh2);
-    return (float)vpadds_f32(suml2);
+    return (float)vpadds_f32(res2);
 }
 
 //更新残差 r = A*x-b
@@ -92,9 +89,8 @@ float MATRIX_PRODUCT(float a[maxN][maxN], float d[maxN], int N){
 
 
 int main(){
-    fstream file("result.csv", ofstream::out);
+    fstream file("res_64.csv", ofstream::out);
     for(int N = 64; N <= maxN; N *= 2) {
-        float total_time = 0.0f;
         //初始化A
         for(int i=0;i<N;i++){
             for(int j =0;j<N;j++){
