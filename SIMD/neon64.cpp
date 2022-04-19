@@ -111,9 +111,11 @@ int main(){
         // displayMatrix(A, N);
         // displayVector(b, N);
 
+        int count = 0;
         timespec_get(&sts, TIME_UTC);
         //开始迭代
         for(int i =0;i<1024;i++){
+            count++;
             float r2 = INNER_PRODUCT(r, r, N);
             float dtAd = MATRIX_PRODUCT(A, d, N);
 
@@ -136,8 +138,8 @@ int main(){
         timespec_get(&ets, TIME_UTC);
         time_t dsec = ets.tv_sec - sts.tv_sec;
         unsigned long long dnsec = ets.tv_nsec - sts.tv_nsec;
-        cout << N << "," << dsec << "." << dnsec << endl;
-        file << N << "," << dsec << "." << dnsec << endl;
+        cout << N << "：\t" << dsec << "." << dnsec << count << endl;
+        file << N << "：\t" << dsec << "." << dnsec << count << endl;
         // displayVector(x, N);
     }
     return 0;
