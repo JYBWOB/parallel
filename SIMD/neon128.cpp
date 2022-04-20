@@ -149,7 +149,7 @@ int main(){
         time_t dsec = ets.tv_sec - sts.tv_sec;
         unsigned long long dnsec = ets.tv_nsec - sts.tv_nsec;
         cout << N << "：\t" << dsec << "." << dnsec << "\t" << count << endl;
-        file << N << "：\t" << dsec << "." << dnsec << "\t" << count << endl;
+        file << N << "," << dsec << "." << dnsec << "," << count << endl;
         // displayVector(x, N);
     }
     return 0;
