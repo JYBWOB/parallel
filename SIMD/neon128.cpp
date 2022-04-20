@@ -7,7 +7,7 @@
 #include<fstream>
 #include<arm_neon.h>
 using namespace std;
-const int maxN = 8192;
+const int maxN = 2048;
 //初始化A为一个N*N的矩阵的对称矩阵
 float A[maxN][maxN] = {0};
 
@@ -18,6 +18,11 @@ float b[maxN] = {1.0};
 float r[maxN] = {-1};
 float d[maxN] = {0};
 float x[maxN] = {0};
+
+// int MAX_ITER_TIME = 5000;
+// bool FIX_ITER_TIME = true;
+int MAX_ITER_TIME = 500000;
+bool FIX_ITER_TIME = false;
 
 struct timespec sts, ets;
 
@@ -93,7 +98,7 @@ float MATRIX_PRODUCT(float a[maxN][maxN], float d[maxN], int N){
 
 int main(){
     fstream file("res_128.csv", ofstream::out);
-    for(int N = 64; N <= maxN; N *= 2) {
+    for(int N = 128; N <= maxN; N += 128) {
         //初始化A
         for(int i=0;i<N;i++){
             for(int j =0;j<N;j++){
@@ -105,8 +110,10 @@ int main(){
                 }
             }
         }
-        memset(b, 1.0, sizeof(float) * maxN);
-        memset(x, 0, sizeof(float) * maxN);
+        for(int i = 0; i < N; i++) {
+            b[i] = 1.0;
+            x[i] = 0;
+        }
         MATRIX_VECTOR_PRODUCT(r, A, x, b, N);
         for(int i = 0; i < N; i++)
             d[i] = -r[i];
@@ -117,7 +124,7 @@ int main(){
         int count = 0;
         timespec_get(&sts, TIME_UTC);
         //开始迭代
-        for(int i =0;i<1024;i++){
+        for(int i =0;i<MAX_ITER_TIME;i++){
             count++;
             float r2 = INNER_PRODUCT(r, r, N);
             float dtAd = MATRIX_PRODUCT(A, d, N);
@@ -131,7 +138,7 @@ int main(){
                 r[j] = r[j] + alpha*INNER_PRODUCT(A[j], d, N);
             }
             float r2n = INNER_PRODUCT(r, r, N);
-            if(r2n < 1e-6)
+            if(!FIX_ITER_TIME && r2n < 1e-4)
                 break;
             int beta = r2n / r2;
             for(int j=0; j < N; j++) {
@@ -141,8 +148,8 @@ int main(){
         timespec_get(&ets, TIME_UTC);
         time_t dsec = ets.tv_sec - sts.tv_sec;
         unsigned long long dnsec = ets.tv_nsec - sts.tv_nsec;
-        cout << N << "：\t" << dsec << "." << dnsec << count << endl;
-        file << N << "：\t" << dsec << "." << dnsec << count << endl;
+        cout << N << "：\t" << dsec << "." << dnsec << "\t" << count << endl;
+        file << N << "：\t" << dsec << "." << dnsec << "\t" << count << endl;
         // displayVector(x, N);
     }
     return 0;
