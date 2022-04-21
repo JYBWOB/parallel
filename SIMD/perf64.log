@@ -1,0 +1,19 @@
+1024：	104.155686160	8000
+
+ Performance counter stats for './perf64_g':
+
+        104,166.99 msec task-clock:u              #    1.000 CPUs utilized          
+                 0      context-switches:u        #    0.000 K/sec                  
+                 0      cpu-migrations:u          #    0.000 K/sec                  
+               121      page-faults:u             #    0.001 K/sec                  
+   270,734,175,269      cycles:u                  #    2.599 GHz                    
+   353,848,413,761      instructions:u            #    1.31  insn per cycle         
+   <not supported>      branches:u                                                  
+        16,460,661      branch-misses:u                                             
+
+     104.167640520 seconds time elapsed
+
+     104.167324000 seconds user
+       0.000000000 seconds sys
+
+
