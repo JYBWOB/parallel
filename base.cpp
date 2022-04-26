@@ -7,17 +7,24 @@
 #include<immintrin.h>
 #include<fstream>
 using namespace std;
-const int maxN = 8;
-//åˆå§‹åŒ–Aä¸ºä¸€ä¸ªN*Nçš„çŸ©é˜µçš„å¯¹ç§°çŸ©é˜µ
+const int maxN = 2048;
+//³õÊ¼»¯AÎªÒ»¸öN*NµÄ¾ØÕóµÄ¶Ô³Æ¾ØÕó
 float A[maxN][maxN] = {0};
 
-//åˆå§‹åŒ–æ•°ç»„b
+//³õÊ¼»¯Êı×éb
 float b[maxN] = {1.0};
 
- //åˆå§‹åŒ–æ®‹å·®r,ç»“æœx,è®¡ç®—æ–¹å‘å‘é‡d
+ //³õÊ¼»¯²Ğ²îr,½á¹ûx,¼ÆËã·½ÏòÏòÁ¿d
 float r[maxN] = {-1};
 float d[maxN] = {0};
 float x[maxN] = {0};
+
+// int MAX_ITER_TIME = 5000;
+// bool FIX_ITER_TIME = true;
+int MAX_ITER_TIME = 500000;
+bool FIX_ITER_TIME = false;
+
+struct timespec sts, ets;
 
 void displayMatrix(float a[maxN][maxN], int N){
     for(int i=0;i<N;i++){
@@ -35,7 +42,7 @@ void displayVector(float b[maxN], int N){
     cout<<endl;
 }
 
-//è®¡ç®—å†…ç§¯
+//¼ÆËãÄÚ»ı
 float INNER_PRODUCT(float a[maxN], float b[maxN], int N){
     float res = 0;
     for(int i=0;i<N;i++){
@@ -44,7 +51,7 @@ float INNER_PRODUCT(float a[maxN], float b[maxN], int N){
     return res;
 }
 
-//æ›´æ–°æ®‹å·® r = A*x-b
+//¸üĞÂ²Ğ²î r = A*x-b
 void  MATRIX_VECTOR_PRODUCT(float *r, float a[maxN][maxN], float x[maxN],float b[maxN], int N){
     float temp = 0;
     for(int i=0;i<N;i++){
@@ -56,7 +63,7 @@ void  MATRIX_VECTOR_PRODUCT(float *r, float a[maxN][maxN], float x[maxN],float b
     }
 }
 
-//è®¡ç®—dtAd
+//¼ÆËãdtAd
 float MATRIX_PRODUCT(float a[maxN][maxN], float d[maxN], int N){
     float res = 0;
     float temp = 0;
@@ -72,53 +79,62 @@ float MATRIX_PRODUCT(float a[maxN][maxN], float d[maxN], int N){
 
 
 int main(){
-    int N = 8;
-    float total_time = 0.0f;
-    //åˆå§‹åŒ–A
-    for(int i=0;i<N;i++){
-        for(int j =0;j<N;j++){
-            if(i==j){
-                A[i][j] = 2;
+    fstream file("res_base.csv", ofstream::out);
+    for(int N = 128; N <= maxN; N += 128) {
+        //³õÊ¼»¯A
+        for(int i=0;i<N;i++){
+            for(int j =0;j<N;j++){
+                if(i==j){
+                    A[i][j] = 2;
+                }
+                if(abs(i-j) == 1){
+                    A[i][j] = -1;
+                }
             }
-            if(abs(i-j) == 1){
-                A[i][j] = -1;
+        }
+        for(int i = 0; i < N; i++) {
+            b[i] = 1.0;
+            x[i] = 0;
+        }
+        MATRIX_VECTOR_PRODUCT(r, A, x, b, N);
+        for(int i = 0; i < N; i++) {
+            d[i] = -r[i];
+        }
+        
+        //displayMatrix(A, N);
+        //displayVector(b, N);
+
+        int count = 0;
+        long long head , tail , freq ;
+        QueryPerformanceFrequency ((LARGE_INTEGER *)&freq );
+        QueryPerformanceCounter ((LARGE_INTEGER *)&head );
+        //¿ªÊ¼µü´ú
+        for(int i =0;i<MAX_ITER_TIME;i++){
+            count++;
+            float r2 = INNER_PRODUCT(r, r, N);
+            float dtAd = MATRIX_PRODUCT(A, d, N);
+
+            //¼ÆËã²½³¤
+            float alpha = r2/dtAd;
+            //ĞŞÕıx
+            for(int j=0;j<N;j++){
+                x[j] = x[j] + alpha*d[j];
+                r[j] = r[j] + alpha*INNER_PRODUCT(A[j], d, N);
+            }
+            float r2n = INNER_PRODUCT(r, r, N);
+            if(!FIX_ITER_TIME && r2n < 1e-4)
+                break;
+            int beta = r2n / r2;
+            for(int j=0; j < N; j++) {
+                d[j] = -r[j] + beta * d[j];
             }
         }
+        QueryPerformanceCounter ((LARGE_INTEGER *)&tail );
+        float time = (tail - head) * 1000.0 / freq;
+        cout << N << "£º\t" << time << "\t" << count << endl;
+        file << N << "," << time << "," << count << endl;
+        // displayVector(x, N);
     }
-    MATRIX_VECTOR_PRODUCT(r, A, x, b, N);
-    for(int i = 0; i < N; i++)
-        d[i] = -r[i];
-    
-    displayMatrix(A, N);
-    //displayVector(b, N);
-
-    long long head , tail , freq ;
-    QueryPerformanceFrequency ((LARGE_INTEGER *)&freq );
-    QueryPerformanceCounter ((LARGE_INTEGER *)&head );
-    //å¼€å§‹è¿­ä»£
-    for(int i =0;i<1024;i++){
-        float r2 = INNER_PRODUCT(r, r, N);
-        float dtAd = MATRIX_PRODUCT(A, d, N);
-
-        //è®¡ç®—æ­¥é•¿
-        float alpha = r2/dtAd;
-
-        //ä¿®æ­£x
-        for(int j=0;j<N;j++){
-            x[j] = x[j] + alpha*d[j];
-            r[j] = r[j] + alpha*INNER_PRODUCT(A[j], d, N);
-        }
-        float r2n = INNER_PRODUCT(r, r, N);
-        if(r2n < 1e-6)
-            break;
-        int beta = r2n / r2;
-        for(int j=0; j < N; j++) {
-            d[j] = -r[j] + beta * d[j];
-        }
-    }
-    QueryPerformanceCounter ((LARGE_INTEGER *)&tail );
-    total_time += (tail - head) * 1000.0 / freq;
-    cout << N << " : " << total_time<< "ms" << endl;
-    displayVector(x, N);
+    file.close();
     return 0;
 }
