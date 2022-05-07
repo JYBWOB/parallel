@@ -24,7 +24,6 @@ float x[maxN] = {0};
 // bool FIX_ITER_TIME = true;
 int MAX_ITER_TIME = 500000;
 bool FIX_ITER_TIME = false;
-
 #define NUM_THREADS 4
 
 struct timespec sts, ets;
@@ -89,6 +88,7 @@ float INNER_PRODUCT(float a[maxN], float b[maxN], int N){
 
 //更新残差 r = A*x-b
 void  MATRIX_VECTOR_PRODUCT(float *r, float a[maxN][maxN], float x[maxN],float b[maxN], int N){
+    // base
     // float temp = 0;
     // for(int i = 0; i < N; i++){
     //     temp = 0;
@@ -98,11 +98,13 @@ void  MATRIX_VECTOR_PRODUCT(float *r, float a[maxN][maxN], float x[maxN],float b
     //     r[i] = temp - b[i];
     // }
 
+    // neon
     // float temp = 0;
     // for(int i = 0; i < N; i++){
     //     r[i] = INNER_PRODUCT(a[i], x, N) - b[i];
     // }
 
+    // openmp
     #pragma omp parallel for num_threads(NUM_THREADS)
     for(int i = 0; i < N; i++){
         r[i] = INNER_PRODUCT(a[i], x, N) - b[i];
@@ -133,9 +135,9 @@ float MATRIX_PRODUCT(float a[maxN][maxN], float d[maxN], int N){
 
 
 int main(){
-    fstream file("openmp.csv", ofstream::out);
+    fstream file("res_openmp.csv", ofstream::out);
     for(int N = 128; N <= maxN; N += 128) {
-        //初始化A·
+        //初始化A
         for(int i=0;i<N;i++){
             for(int j =0;j<N;j++){
                 if(i==j){
