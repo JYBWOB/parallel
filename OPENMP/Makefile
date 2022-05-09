@@ -1,5 +1,5 @@
 all : 
-	g++ -O3 -fopenmp -o openmp openmp.cpp
+	g++ -fopenmp -g -march=native -o openmp openmp.cpp
 
 get:
 	scp s2120210448@node1:/home/s2120210448/res_64.csv .
