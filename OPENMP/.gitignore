@@ -1,3 +1,5 @@
 *.csv
 openmp
 run.sh.*
+openmp_p
+openmp_u_p
